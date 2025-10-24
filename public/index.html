@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CHAT V3</title>
+
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js"></script>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>##### APP DE CHAT COM MONGODB PARA ATIVIDADE 03 #####</h1>
+
+      <form id="chat">
+        <input type="text" name="username" placeholder="Digite seu usuário" />
+        <br />
+        <input type="text" name="message" placeholder="Digite sua mensagem" />
+        <br />
+        <button type="submit">Enviar</button>
+
+        <div class="messages"></div>
+      </form>
+    </div>
+
+    <script>
+      const socket = io("http://localhost:3000");
+
+      function renderMessage(message) {
+        $(".messages").append(
+          '<div class="message"><strong>' +
+            message.usuario +
+            " " +
+            message.dataHora +
+            "</strong>: " +
+            message.mensagem +
+            "</div>"
+        );
+      }
+
+      socket.on("previousMessage", function (messages) {
+        for (let message of messages) {
+          renderMessage(message);
+        }
+      });
+
+      socket.on("receivedMessage", function (message) {
+        renderMessage(message);
+      });
+
+      $("#chat").submit(function (event) {
+        event.preventDefault();
+
+        const author = $("input[name=username]").val();
+        const message = $("input[name=message]").val();
+
+        if (author.length && message.length) {
+          const now = new Date();
+
+          const dia = String(now.getDate()).padStart(2, "0");
+          const mes = String(now.getMonth() + 1).padStart(2, "0");
+          const ano = now.getFullYear();
+          const hora = String(now.getHours()).padStart(2, "0");
+          const minuto = String(now.getMinutes()).padStart(2, "0");
+          const segundo = String(now.getSeconds()).padStart(2, "0");
+
+          const data_hora_msg = `[${dia}/${mes}/${ano}-${hora}:${minuto}:${segundo}]`;
+
+          const messageObject = {
+            usuario: author,
+            dataHora: data_hora_msg,
+            timestamp: now, // ✅ campo real de data
+            mensagem: message,
+          };
+
+          socket.emit("sendMessage", messageObject);
+        }
+      });
+    </script>
+  </body>
+</html>
